@@ -131,18 +131,17 @@ if menu == "📷 QR Scanner":
 
     # Live Scan
     with tab1:
-        start = st.checkbox("🎥 Start Webcam Scan")
-        frame_window = st.image([])
+        st.info("💡 Note: For security reasons, web browsers require you to click 'Take Photo' to scan.")
+        
+        img_file_buffer = st.camera_input("📷 Scan QR Code")
 
-        cam = cv2.VideoCapture(0)
+        if img_file_buffer is not None:
+            # Convert the file buffer to an opencv image
+            bytes_data = img_file_buffer.getvalue()
+            cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
 
-        while start:
-            ret, frame = cam.read()
-            if not ret:
-                st.error("❌ Camera not working")
-                break
-
-            data, bbox, _ = qr_detector.detectAndDecode(frame)
+            # Detect and Decode
+            data, bbox, _ = qr_detector.detectAndDecode(cv2_img)
 
             if data:
                 st.success("✅ QR Detected!")
@@ -150,12 +149,8 @@ if menu == "📷 QR Scanner":
 
                 if data.startswith("http"):
                     st.markdown(f"🔗 Link: [{data}]({data})")
-                break
-
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame_window.image(frame_rgb)
-
-        cam.release()
+            else:
+                st.warning("⚠️ No QR code detected in the image. Please try again.")
 
     # Upload Scan
     with tab2:
@@ -292,5 +287,5 @@ elif menu == "🕘 QR History":
                     st.success("Deleted Successfully! Refresh Page.")
         else:
             st.warning("History Empty")
-
+            
     st.markdown("</div>", unsafe_allow_html=True)
